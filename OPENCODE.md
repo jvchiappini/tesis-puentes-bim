@@ -53,6 +53,12 @@ cómputo corre en el navegador del usuario.** Ver `README.md` para el detalle co
   solitario. `src/core/` (Python) y `src/api/` (FastAPI) **ya no existen** — todo vive en
   `src/engine/` (TypeScript, `@tesis-puentes-bim/engine`), consumido por `src/web/`
   (React), sin backend.
+- **Modelo estructural de losa maciza y carga de config YAML implementados (2026-08-31).**
+  `config/loadYaml.ts` (valida YAML + regla O4/R9), `config/expresiones.ts` (fórmulas
+  parametrizadas), `structural/tipologias/losaMaciza.ts` (solicitaciones, restricciones,
+  costos) — **todo valor normativo sale de `parametros_normativos` del YAML, es
+  modificable y nada está hardcodeado**. `src/web/` inicializado (Vite+React): corre el
+  NSGA-II sobre la losa y grafica el frente de Pareto; `npm run build:web` OK.
 - **Compensación por no tener `pymoo`:** el NSGA-II se implementa desde cero en
   `src/engine/src/optimization/nsga2.ts`, y se valida contra los benchmarks
   estándar de la literatura (ZDT1, SRN — problemas de prueba del paper original de Deb
@@ -105,21 +111,21 @@ cómputo corre en el navegador del usuario.** Ver `README.md` para el detalle co
    y **R4** (espesor mínimo, fórmula de AASHTO STANDARD Art. 8.9) contra el texto de
    AASHTO, y completar los `[VERIFICAR]` restantes del YAML si quedara alguno.
 2. ~~**Implementar `src/engine/src/optimization/nsga2.ts` y validar contra ZDT1/SRN**~~ —
-   ✅ RESUELTO (2026-08-31): benchmarks pasando (23 tests), ver sección "Cerrado".
-   Próxima acción concreta:
-3. **Implementar `src/engine/src/structural/tipologias/losaMaciza.ts`** (hoy son métodos
-   con `throw new Error("TODO")`), citando en cada comentario JSDoc la ecuación y el
-   artículo exacto de la norma (regla no negociable del Agente Programador, ver
-   `agents/programador/AGENT.md`). El NSGA-II ya está listo para acoplarse vía
-   `ProblemaOptimizacion` (ver cómo lo hacen los benchmarks en
-   `src/engine/src/optimization/problemasBenchmark.ts`).
-4. Implementar `src/engine/src/config/loadYaml.ts` (carga y valida el YAML — incluye la
-   regla de que O4/R9 no pueden estar ambos activos) y `src/engine/src/bim/ifcGenerator.ts`
-   (con `web-ifc`).
-5. Recién ahí: `src/web/` (inicializar con Vite — **hoy `npm run build:web` falla porque
-   el workspace no existe**, pendiente deliberado del plan) y `tools/docx-builder/`
-   (parser Markdown, ensamblador docx, citas) — sus arquitecturas ya están decididas,
-   solo falta implementación.
+   ✅ RESUELTO (2026-08-31): benchmarks pasando (ver sección "Cerrado").
+3. ~~**Implementar `src/engine/src/structural/tipologias/losaMaciza.ts`**~~ — ✅ RESUELTO
+   (2026-08-31), junto con `config/loadYaml.ts`, `config/expresiones.ts` e `index.ts`
+   (API pública). **Todo valor normativo es parámetro modificable del YAML**
+   (`parametros_normativos`), nada hardcodeado; los que faltan contrastar contra AASHTO
+   están marcados `[VERIFICAR]`. El NSGA-II ya se acopla al caso real vía
+   `construirProblemaNSGA2(sitio, perfil)`. 40 tests pasan, `tsc --noEmit` limpio.
+   Ver `docs/software/modelo-estructural.md`. Próxima acción concreta:
+4. Implementar `src/engine/src/bim/ifcGenerator.ts` (con `web-ifc`) — sigue en
+   `throw new Error("TODO")`. Pendiente además documentar `bim-ifc.md`/`iso19650Metadata.ts`.
+5. ~~**`src/web/` (Vite)**~~ — ✅ INICIALIZADO (2026-08-31): form de sitio + NSGA-II +
+   gráfico del frente de Pareto (SVG) + tabla. `npm run build:web` OK (desbloquea el
+   deploy de Pages; el workflow `deploy-pages.yml` publica `src/web/dist`). Queda
+   pendiente `tools/docx-builder/` (parser Markdown, ensamblador docx, citas — esqueletos
+   con TODOs, arquitectura ya decidida).
 
 ## Reglas que no se negocian (repetidas acá porque son las que más se rompen)
 

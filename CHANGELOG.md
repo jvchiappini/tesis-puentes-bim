@@ -3,6 +3,24 @@
 Bitácora de avances del proyecto. Sirve como respaldo para los informes de avance ante el tutor.
 Formato: `## [Fecha] - Hito`
 
+## [2026-08-31] - Modelo estructural de losa maciza parametrizado + visualizador web (Vite) en línea
+- Implementado `src/engine/src/config/loadYaml.ts` (valida el YAML: filosofía normativa,
+  items `activo`, y regla O4/R9 mutuamente excluyentes) y `src/engine/src/config/expresiones.ts`
+  (evaluador seguro de fórmulas parametrizadas: impacto, espesor mínimo, repartición, nº de vías).
+- Implementado `src/engine/src/structural/tipologias/losaMaciza.ts`: solicitaciones (camión
+  HS-20 + carga de faja + impacto I=50/(L+125), combinación Group I LFD), flexión φMn,
+  restricciones R1–R7, R9 y R10, costos y peso propio. **Todo valor sale de
+  `parametros_normativos` del YAML (modificable) — nada hardcodeado**; los valores pendientes
+  de contrastar contra AASHTO quedan marcados `[VERIFICAR]` y editables.
+- API pública del engine en `src/engine/src/index.ts`.
+- `src/web/` inicializado con **Vite + React + TS**: formulario de parámetros de sitio, corre
+  el NSGA-II sobre la losa (perfil `basico`) y grafica el frente de Pareto (SVG) + tabla de
+  soluciones. `npm run build:web` ahora funciona (antes fallaba por workspace inexistente) →
+  desbloquea el deploy de GitHub Pages.
+- Tests: 40 pasan — incluido el modelo contra caso calculado a mano (±2% en φMn), la
+  integración NSGA-II + losa (frente factible), loadYaml y expresiones. `tsc --noEmit` limpio.
+- Documentado el modelo en `docs/software/modelo-estructural.md`.
+
 ## [2026-08-31] - NSGA-II implementado desde cero y validado contra benchmarks de la literatura (ZDT1, SRN)
 - Implementado `src/engine/src/optimization/nsga2.ts`: fast-non-dominated-sort, crowding
   distance, torneo binario, cruce SBX y mutación polinomial (genotipo normalizado en
