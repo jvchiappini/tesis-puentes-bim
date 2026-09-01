@@ -3,6 +3,19 @@
 Bitácora de avances del proyecto. Sirve como respaldo para los informes de avance ante el tutor.
 Formato: `## [Fecha] - Hito`
 
+## [2026-08-31] - Generación de modelo BIM IFC4 (web-ifc) + visor 3D en la web
+- Implementado `src/engine/src/bim/ifcGenerator.ts` (escritura IFC4 con web-ifc: proyecto,
+  sitio, losa maciza con geometría solida por extrusión, material, unidades SI, contexto
+  geométrico) y `src/engine/src/bim/iso19650Metadata.ts` (metadata ISO 19650 + property
+  set "Pset_TesisDiseno" con variables de diseño, resultados estructurales y normativa).
+- Se documentaron las reglas de la API de escritura de web-ifc (tipos definidos del
+  namespace IFC4, wasm en navegador) en `docs/software/bim-ifc.md`.
+- Web: visor 3D paramétrico (Three.js: tablero + armadura principal/repartición + apoyos)
+  al seleccionar una solución del frente, y botón "Descargar modelo IFC4 (.ifc)" que
+  genera el IFC en el navegador (wasm empaquetado por Vite).
+- Tests: 43 pasan (incluye `ifcGenerator.test.ts`: el IFC generado se re-lee con web-ifc y
+  contiene 1 de cada entidad clave). `tsc --noEmit` limpio en engine y web.
+
 ## [2026-08-31] - Modelo estructural de losa maciza parametrizado + visualizador web (Vite) en línea
 - Implementado `src/engine/src/config/loadYaml.ts` (valida el YAML: filosofía normativa,
   items `activo`, y regla O4/R9 mutuamente excluyentes) y `src/engine/src/config/expresiones.ts`

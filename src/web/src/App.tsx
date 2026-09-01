@@ -4,15 +4,22 @@ import {
   LosaMaciza,
   optimizarNSGA2,
   decodificarEntradaLosa,
+  generarIFC,
   type SitioLosa,
   type DefinicionVariable,
+  type EntradaLosa,
+  type IfcAPICompatible,
 } from "@tesis-puentes-bim/engine";
+import { IfcAPI } from "web-ifc";
+import wasmUrl from "web-ifc/web-ifc.wasm?url";
 import yamlConfig from "../../../data/parametros_tipologia/losa_maciza.yaml?raw";
+import BimViewer from "./BimViewer";
 
 const configuracion = parsearYamlTipologia(yamlConfig);
 const modelo = new LosaMaciza(configuracion);
 
 interface FilaPareto {
+  genotipo: number[];
   h: number;
   diamPrincipal: number;
   sepPrincipal: number;
@@ -31,6 +38,7 @@ function extraerFilas(
   return soluciones.map((solucion) => {
     const entrada = decodificarEntradaLosa(variables, solucion.genotipo, sitio);
     return {
+      genotipo: solucion.genotipo,
       h: entrada.espesor_losa,
       diamPrincipal: entrada.diametro_armadura_principal,
       sepPrincipal: entrada.separacion_armadura_principal,
@@ -43,7 +51,18 @@ function extraerFilas(
   });
 }
 
-function GraficoPareto({ filas }: { filas: FilaPareto[] }) {
+// Inicializa web-ifc en el navegador apuntando al WASM empaquetado por Vite.
+async function inicializarApi(): Promise<IfcAPICompatible> {
+  const api = new IfcAPI();
+  await api.Init((_path, _prefix) => wasmUrl);
+  return api as unknown as IfcAPICompatible;
+}
+
+function GraficoPareto({ filas, seleccion, onSeleccionar }: {
+  filas: FilaPareto[];
+  seleccion: number | null;
+  onSeleccionar: (i: number) => void;
+}) {
   const ancho = 720;
   const alto = 420;
   const margen = 46;
@@ -71,14 +90,16 @@ function GraficoPareto({ filas }: { filas: FilaPareto[] }) {
             key={i}
             cx={px(f.costo)}
             cy={py(f.peso)}
-            r={4.5}
+            r={seleccion === i ? 7 : 4.5}
             fill={f.factible ? "#1a7f37" : "#d1242f"}
+            onClick={() => onSeleccionar(i)}
+            style={{ cursor: "pointer" }}
           />
         ))}
       </svg>
       <p className="leyenda">
         <span className="dot verde" /> factible · <span className="dot rojo" /> infactible ·{" "}
-        <b>{factibles.length}</b>/{filas.length} soluciones del frente factibles
+        <b>{factibles.length}</b>/{filas.length} factibles · clic en un punto para ver en 3D / IFC
       </p>
     </div>
   );
@@ -92,21 +113,28 @@ export default function App() {
   const [clase, setClase] = useState<"normal" | "agresiva">("normal");
   const [corriendo, setCorriendo] = useState(false);
   const [filas, setFilas] = useState<FilaPareto[] | null>(null);
+  const [variables, setVariables] = useState<DefinicionVariable[]>([]);
+  const [sitio, setSitio] = useState<SitioLosa | null>(null);
+  const [seleccionIndex, setSeleccionIndex] = useState<number | null>(null);
+  const [seleccion, setSeleccion] = useState<EntradaLosa | null>(null);
+  const [generandoIfc, setGenerandoIfc] = useState(false);
   const [resumen, setResumen] = useState<string>("");
 
   function ejecutar() {
     setCorriendo(true);
     setResumen("");
+    setSeleccion(null);
+    setSeleccionIndex(null);
     setTimeout(() => {
       try {
-        const sitio: SitioLosa = {
+        const s: SitioLosa = {
           luz_diseno: luz,
           ancho_calzada: ancho,
           costo_unitario_hormigon: costoH,
           costo_unitario_acero: costoA,
           clase_exposicion: clase,
         };
-        const problema = modelo.construirProblemaNSGA2(sitio, "basico");
+        const problema = modelo.construirProblemaNSGA2(s, "basico");
         const resultado = optimizarNSGA2(problema, {
           poblacion: 60,
           generaciones: 200,
@@ -114,12 +142,12 @@ export default function App() {
           probabilidadMutacion: 1 / problema.variables.length,
           semilla: 2026,
         });
-        const f = extraerFilas(resultado.frentePareto, problema.variables, sitio);
+        const f = extraerFilas(resultado.frentePareto, problema.variables, s);
         setFilas(f);
+        setVariables(problema.variables);
+        setSitio(s);
         const fact = f.filter((x) => x.factible);
-        const barato = fact.length
-          ? fact.reduce((a, b) => (b.costo < a.costo ? b : a))
-          : null;
+        const barato = fact.length ? fact.reduce((a, b) => (b.costo < a.costo ? b : a)) : null;
         setResumen(
           `Frente: ${f.length} soluciones (${fact.length} factibles). ` +
             (barato
@@ -134,6 +162,47 @@ export default function App() {
     }, 50);
   }
 
+  function seleccionar(i: number) {
+    if (!variables.length || !sitio) return;
+    const entrada = decodificarEntradaLosa(variables, filas![i].genotipo, sitio);
+    setSeleccionIndex(i);
+    setSeleccion(entrada);
+  }
+
+  async function descargarIFC() {
+    if (!seleccion) return;
+    setGenerandoIfc(true);
+    try {
+      const resultado = modelo.evaluar(seleccion, "basico");
+      const bytes = await generarIFC(
+        {
+          nombre: "Puente losa maciza",
+          descripcion: "Modelo IFC generado por Tesis Puentes BIM (NSGA-II + AASHTO STANDARD 2002)",
+          luz: seleccion.luz_diseno,
+          ancho: seleccion.ancho_calzada,
+          espesor: seleccion.espesor_losa,
+          diseno: seleccion,
+          resultado,
+        },
+        { inicializarApi },
+      );
+      const blob = new Blob([bytes as unknown as BlobPart], { type: "application/step" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "puente-losa-maciza.ifc";
+      a.click();
+      URL.revokeObjectURL(url);
+      setResumen("Archivo IFC4 descargado (abrirlo en un visor IFC compatible).");
+    } catch (e) {
+      setResumen(`Error generando IFC: ${(e as Error).message}`);
+    } finally {
+      setGenerandoIfc(false);
+    }
+  }
+
+  const seleccionEvaluada = seleccion ? modelo.evaluar(seleccion, "basico") : null;
+
   return (
     <main>
       <header>
@@ -141,7 +210,8 @@ export default function App() {
         <p className="sub">
           NSGA-II (implementación propia, validada contra ZDT1/SRN) + modelo estructural
           AASHTO STANDARD 2002 parametrizado desde{" "}
-          <code>data/parametros_tipologia/losa_maciza.yaml</code>. Demo v1.
+          <code>data/parametros_tipologia/losa_maciza.yaml</code> + generación de modelo
+          IFC (web-ifc).
         </p>
       </header>
 
@@ -181,7 +251,11 @@ export default function App() {
       {filas && (
         <section className="panel">
           <h2>Frente de Pareto — costo vs. peso propio</h2>
-          <GraficoPareto filas={filas} />
+          <GraficoPareto
+            filas={filas}
+            seleccion={seleccionIndex}
+            onSeleccionar={seleccionar}
+          />
           <table>
             <thead>
               <tr>
@@ -199,7 +273,12 @@ export default function App() {
               {[...filas]
                 .sort((a, b) => a.costo - b.costo)
                 .map((f, i) => (
-                  <tr key={i} className={f.factible ? "" : "infactible"}>
+                  <tr
+                    key={i}
+                    className={f.factible ? "" : "infactible"}
+                    onClick={() => seleccionar(i)}
+                    style={{ cursor: "pointer" }}
+                  >
                     <td>{(f.h * 100).toFixed(0)}</td>
                     <td>{f.diamPrincipal}</td>
                     <td>{(f.sepPrincipal * 100).toFixed(0)}</td>
@@ -212,6 +291,27 @@ export default function App() {
                 ))}
             </tbody>
           </table>
+        </section>
+      )}
+
+      {seleccion && seleccionEvaluada && (
+        <section className="panel">
+          <h2>Vista BIM de la solución seleccionada</h2>
+          <p className="resumen">
+            h={(seleccion.espesor_losa * 100).toFixed(0)} cm · Ø{seleccion.diametro_armadura_principal} c/
+            {(seleccion.separacion_armadura_principal * 100).toFixed(0)} cm (principal) · Ø
+            {seleccion.diametro_armadura_reparticion} c/
+            {(seleccion.separacion_armadura_reparticion * 100).toFixed(0)} cm (repartición) · f'c=
+            {seleccion.resistencia_hormigon} MPa · fy={seleccion.grado_acero} MPa · costo{" "}
+            {seleccionEvaluada.costoPorM2.toFixed(1)} USD/m² · peso{" "}
+            {seleccionEvaluada.pesoPropioPorM2.toFixed(2)} kN/m²
+          </p>
+          <BimViewer entrada={seleccion} sitio={seleccion} />
+          <div className="acciones">
+            <button onClick={descargarIFC} disabled={generandoIfc}>
+              {generandoIfc ? "Generando IFC…" : "Descargar modelo IFC4 (.ifc)"}
+            </button>
+          </div>
         </section>
       )}
 

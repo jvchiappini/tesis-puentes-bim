@@ -119,13 +119,17 @@ cómputo corre en el navegador del usuario.** Ver `README.md` para el detalle co
    están marcados `[VERIFICAR]`. El NSGA-II ya se acopla al caso real vía
    `construirProblemaNSGA2(sitio, perfil)`. 40 tests pasan, `tsc --noEmit` limpio.
    Ver `docs/software/modelo-estructural.md`. Próxima acción concreta:
-4. Implementar `src/engine/src/bim/ifcGenerator.ts` (con `web-ifc`) — sigue en
-   `throw new Error("TODO")`. Pendiente además documentar `bim-ifc.md`/`iso19650Metadata.ts`.
+4. ~~**Implementar `src/engine/src/bim/ifcGenerator.ts` (web-ifc)**~~ — ✅ RESUELTO
+   (2026-08-31), junto con `bim/iso19650Metadata.ts`. Genera IFC4 del puente losa maciza
+   (IFCPROJECT → IFCSITE → IFCSLAB con geometría por extrusión, material, unidades y
+   Pset_TesisDiseno con diseño + ISO 19650). La web permite seleccionar una solución →
+   visor 3D (Three.js) y descargar el .ifc. Documentado en `docs/software/bim-ifc.md`.
+   Pendiente para Fase 4: más elementos (pilas, estribos, IFCTENDONAR/IFCREINFORCINGBAR)
+   y visor por parseo del propio IFC (web-ifc-three).
 5. ~~**`src/web/` (Vite)**~~ — ✅ INICIALIZADO (2026-08-31): form de sitio + NSGA-II +
-   gráfico del frente de Pareto (SVG) + tabla. `npm run build:web` OK (desbloquea el
-   deploy de Pages; el workflow `deploy-pages.yml` publica `src/web/dist`). Queda
-   pendiente `tools/docx-builder/` (parser Markdown, ensamblador docx, citas — esqueletos
-   con TODOs, arquitectura ya decidida).
+   frente de Pareto (SVG) + visor 3D + descarga IFC. `npm run build:web` OK (Pages
+   publicando). Queda pendiente `tools/docx-builder/` (parser Markdown, ensamblador docx,
+   citas — esqueletos con TODOs, arquitectura ya decidida).
 
 ## Reglas que no se negocian (repetidas acá porque son las que más se rompen)
 

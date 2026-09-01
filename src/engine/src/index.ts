@@ -67,5 +67,18 @@ export {
 // Interfaz comun de tipologias
 export type { BaseTipologia } from "./structural/baseTipologia";
 
-// BIM (IFC) -- pendiente de implementacion en Fase 4
-export { generarIFC } from "./bim/ifcGenerator";
+// BIM (IFC)
+export {
+  generarIFC,
+  crearModeloIFC,
+  iniciarWebIfc,
+  generarGlobalId,
+  type DatosIFC,
+  type IfcAPICompatible,
+} from "./bim/ifcGenerator";
+export {
+  crearMetadataISO19650,
+  construirPropiedadesDiseno,
+  type MetadataISO19650,
+  type EntradaPropiedad,
+} from "./bim/iso19650Metadata";
