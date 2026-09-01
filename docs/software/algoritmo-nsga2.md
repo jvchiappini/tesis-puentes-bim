@@ -16,7 +16,8 @@
 > distintas. Ver `docs/normativa/manual-carreteras-py.md`. Todo criterio marcado
 > `[VERIFICAR]` usa AASHTO STANDARD 2002 como respaldo provisorio, pendiente de contrastar
 > contra el texto completo de los Cap. 4.2.3.2 (Cargas) y 4.2.3.5 (Hormigón Armado) del
-> Manual, aún no conseguidos en texto completo (ver bitácora).
+> Manual — **resuelto el 2026-08-31** (texto completo obtenido; ver bitácora). Los
+> `[VERIFICAR]` de P3, P4, R1 y R4 ya fueron reemplazados por valores confirmados.
 >
 > **Sobre el lenguaje de implementación:** todo lo definido en este documento se
 > implementa en TypeScript, en el paquete `src/engine/` — el proyecto no tiene motor en
@@ -56,9 +57,9 @@ problema mientras se depura el modelo.
 |---|---|---|---|---|
 | P1 | Luz de diseño (libre o efectiva) | `L` | ✅ Sí | Determina espesor mínimo normativo |
 | P2 | Ancho de calzada / número de carriles | `w_calzada` | ✅ Sí | |
-| P3 | Sobrecarga vehicular de diseño | `camión_diseño` | ✅ Sí | Camión tipo AASHTO HL-93 o el que defina el Manual PY — `[VERIFICAR]` cuál usa Paraguay exactamente |
-| P4 | Incremento por carga dinámica (impacto) | `IM` | ✅ Sí | AASHTO STANDARD 2002 usa fórmula de impacto I = 50/(L+125) (%, L en pies), distinta a la de LRFD -- `[VERIFICAR]` valor exacto en sección 4.2.3.2 Cargas del Manual PY, aún no obtenida en texto completo |
-| P5 | Peso específico del hormigón | `γ_hormigón` | ✅ Sí | Típico 24 kN/m³ (verificar valor local) |
+| P3 | Sobrecarga vehicular de diseño | `camión_diseño` | ✅ Sí | Camión tipo **AASHTO STANDARD HS-20 / H**, o carga de faja, el que genere el efecto más desfavorable. ✅ CONFIRMADO: el Manual PY no define camión propio y **no usa HL-93** (HL-93 es de AASHTO LRFD). Fuente: Manual PY 4.2.3.2, págs. 307–316. |
+| P4 | Incremento por carga dinámica (impacto) | `IM` | ✅ Sí | ✅ CONFIRMADO: I = 50/(L+125) (%), L en pies, máx. 30% — AASHTO STANDARD 2002 Art. 3.8.2.2, a la que remite el Manual PY 4.2.3.2 (Art. 3.8; el Manual no la redefine). |
+| P5 | Peso específico del hormigón | `γ_hormigón` | ✅ Sí | ✅ CONFIRMADO: 24 kN/m³ — Tabla 4.2_7 del Manual PY (hormigón armado y pretensado = 24.000 N/m³). |
 | P6 | Cargas de barandas/veredas | `q_barandas` | ⚪ No (v1: sin veredas) | Activar si el caso de estudio las incluye |
 | P7 | Clase de exposición ambiental | `exposición` | ✅ Sí | Determina recubrimiento mínimo (V9) y control de fisuración |
 | P8 | Ángulo de esviaje del puente | `skew` | ⚪ No (v1: puente recto, skew=0) | Afecta distribución de cargas — complejidad no justificada en v1 |
@@ -92,10 +93,10 @@ problema mientras se depura el modelo.
 
 | # | Restricción | Activa por defecto | Fuente normativa |
 |---|---|---|---|
-| R1 | Flexión ELU: momento resistente ≥ momento último mayorado | ✅ Sí | AASHTO STANDARD 2002 (base normativa principal confirmada) / Manual PY Cap. 4.2.3.5 Hormigón Armado `[VERIFICAR]` (texto completo aún no obtenido) |
+| R1 | Flexión ELU: momento resistente ≥ momento último mayorado | ✅ Sí | AASHTO STANDARD 2002 Sección 8 (Hormigón Armado). ✅ CONFIRMADO con texto completo: el Manual PY Cap. 4.2.3.5 remite íntegramente a la Sección 8 de AASHTO STANDARD. |
 | R2 | Cuantía mínima de armadura | ✅ Sí | AASHTO LRFD 5.6.3.3 |
 | R3 | Cuantía máxima / sección controlada por tracción (ductilidad) | ✅ Sí | AASHTO LRFD (factor φ según deformación neta) |
-| R4 | Espesor mínimo de losa según luz | ✅ Sí | AASHTO LRFD Tabla 2.5.2.6.3-1 / Manual PY `[VERIFICAR]` |
+| R4 | Espesor mínimo de losa según luz | ✅ Sí | ✅ CONFIRMADO el origen: Manual PY 4.2.3.5 remite a AASHTO STANDARD Sección 8 (el Manual no define espesor mínimo propio). Ajustar fuente de LRFD Tabla 2.5.2.6.3-1 → AASHTO STANDARD Art. 8.9. |
 | R5 | Recubrimiento mínimo según exposición | ✅ Sí | AASHTO LRFD 5.10.1 |
 | R6 | Separación máxima/mínima entre barras (constructibilidad) | ✅ Sí | AASHTO LRFD 5.10.3 |
 | R7 | Armadura de repartición mínima (transversal) | ✅ Sí | AASHTO LRFD 5.10.3.2 (armadura de temperatura/repartición) |

@@ -112,3 +112,38 @@ Formato de cada entrada:
   desde cero se valide contra los problemas de prueba estandar de la literatura (ZDT1,
   SRN, los mismos del paper original de Deb et al. 2002) en vez de validacion cruzada
   contra una segunda implementacion.
+
+## 2026-08-31 — Tema buscado: "Manual Vol. 4.2 - texto completo de 4.2.3.2 Cargas y 4.2.3.5 Hormigón Armado"
+- Bases consultadas: PDF oficial descargado directo (dominio normativa.itafec.com), 20 MB,
+  832 páginas (el PDF contiene varios volúmenes concatenados; Vol. 4.2 = págs. 263–381 del
+  documento = págs. 5–123 del PDF).
+- Palabras clave usadas: n/a (extracción de texto de un PDF ya identificado).
+- Método: (1) descarga con `curl`; (2) mapeo de páginas (página del documento =
+  página del PDF + 258, verificado en dos puntos: 263→5 y 508→250); (3) extracción con
+  pdf.js — la capa de texto del cuerpo usa una fuente sin mapeo Unicode (salen caracteres
+  privados ilegibles); (4) OCR local con Windows.Media.Ocr (idioma es-MX) sobre páginas
+  renderizadas con `pdftoppm` (págs. 49–58 y 102–106 del PDF). Resultado: texto legible
+  completo de ambas secciones.
+- Fuentes relevantes encontradas (confirmado con texto real, ya no `[VERIFICAR]`):
+  - **P3 camión de diseño:** el Manual PY NO define camión propio — "las cargas vivas de
+    diseño son las establecidas por las Normativas AASHTO". Esquema: 1er caso camión tipo
+    H/HS (HS-20, HS-15) y 2do caso carga de faja, el que dé el efecto más desfavorable.
+    **NO es HL-93** (HL-93 es de AASHTO LRFD, solo se presenta como alcance comparativo).
+  - **P4 impacto:** el Manual remite al Art. 3.8 de AASHTO y no redefine la fórmula → rige
+    I = 50/(L+125) (%), L en pies, máx. 30% (AASHTO STANDARD 2002, Art. 3.8.2.2).
+  - **R1:** Cap. 4.2.3.5 remite íntegramente a la Sección 8 de AASHTO STANDARD.
+  - **R4:** el Manual no define espesor mínimo de losa → rige AASHTO STANDARD Art. 8.9
+    (corrige la referencia previa a LRFD Tabla 2.5.2.6.3-1).
+  - Vías de tránsito: ancho de vía de camión 3,00 m; nº vías = ancho/3,50 m; calzada
+    7,30 m → dos vías de media calzada.
+  - Hormigones (Tabla 4.2_17): P 35 MPa (350 kgf/cm²), A 28, B 21, C 18, D 15, E 13.
+  - Acero (Tabla 4.2_18): Grado 60, fy = 420 MPa (4.200 kgf/cm²), punto 8.15.2.2 AASHTO.
+  - Recubrimientos (Art. 8.22 AASHTO): contra terreno 7,5 cm; pilotes in situ 7,5 cm;
+    intemperie refuerzo principal 5,0 cm / estribos 4,0 cm; losa clima moderado 2,5 cm
+    (sup. e inf.); losa ambiente agresivo sup. 4,0 cm / inf. 5,0 cm.
+  - Peso específico hormigón armado 24.000 N/m³ (Tabla 4.2_7) = 24 kN/m³.
+  - Losas de aproximación: espesor mínimo 20 cm; Ø12 c/20; juntas ≤ 6 m; vano ≤ 25 m².
+- Conclusión / qué se usa de esto en el proyecto: se resolvieron los `[VERIFICAR]` de P3,
+  P4, R1 y R4 en `algoritmo-nsga2.md` y en `data/parametros_tipologia/losa_maciza.yaml`, y
+  se documentó el texto de las secciones en `docs/normativa/manual-carreteras-py.md`. Queda
+  registrado el método (OCR) por si se necesita extraer más secciones del mismo PDF.

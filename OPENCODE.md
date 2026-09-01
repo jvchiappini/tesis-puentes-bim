@@ -54,10 +54,14 @@ cómputo corre en el navegador del usuario.** Ver `README.md` para el detalle co
   `src/engine/` (TypeScript, `@tesis-puentes-bim/engine`), consumido por `src/web/`
   (React), sin backend.
 - **Compensación por no tener `pymoo`:** el NSGA-II se implementa desde cero en
-  `src/engine/src/optimization/nsga2.ts`, y debe validarse contra los benchmarks
+  `src/engine/src/optimization/nsga2.ts`, y se valida contra los benchmarks
   estándar de la literatura (ZDT1, SRN — problemas de prueba del paper original de Deb
-  et al. 2002) en `src/engine/tests/benchmarks/`, hoy marcados `skip`. Sacar el `skip`
-  es la señal de que ese hito se cumplió — nunca sacarlo sin que el test realmente pase.
+  et al. 2002) en `src/engine/tests/benchmarks/`. **IMPLEMENTADO Y PASANDO (2026-08-31):**
+  los benchmarks ya no están en `skip`; 23 tests del engine pasan (unitarios por
+  componente + ZDT1 + SRN), `tsc --noEmit` sin errores. Criterios y umbrales en
+  `docs/software/plan-de-validacion.md` y en los propios tests (semilla fija =
+  deterministas). El algoritmo es genérico (ProblemaOptimizacion) y ya está listo para
+  acoplarse al caso real de la losa maciza.
 
 ### Confirmado con fuente real (no inventar, no volver a buscar)
 - El Manual de Carreteras del Paraguay usa **AASHTO STANDARD 2002 (17th ed.)** como base
@@ -76,38 +80,46 @@ cómputo corre en el navegador del usuario.** Ver `README.md` para el detalle co
   `src/engine/src/bim/ifcGenerator.ts`.
 - No existe una librería npm de NSGA-II con la madurez de `pymoo` — de ahí la
   implementación propia y la obligación de los benchmarks (ver arriba).
+- **Texto completo de Cap. 4.2.3.2 "Cargas" (pág. 307) y 4.2.3.5 "Hormigón Armado"
+  (pág. 360) OBTENIDO (2026-08-31)** — descarga directa del PDF (20 MB, 832 págs.) +
+  render con `pdftoppm` + OCR local (Windows.Media.Ocr, es-MX), porque la capa de texto
+  del PDF usa una fuente sin mapeo Unicode. Detalle en
+  `docs/normativa/manual-carreteras-py.md` y `docs/tesis/bitacora-busquedas.md`.
+  Con esto quedaron resueltos los `[VERIFICAR]` de P3, P4, R1 y R4:
+  - **P3**: el Manual PY no define camión propio; usa cargas vivas AASHTO (camión H/HS-20
+    o carga de faja). **NO es HL-93** (HL-93 es de AASHTO LRFD).
+  - **P4**: I = 50/(L+125) (%), L en pies, máx. 30% — AASHTO STANDARD Art. 3.8.2.2, al que
+    remite el Manual.
+  - **R1**: Cap. 4.2.3.5 remite íntegramente a la Sección 8 de AASHTO STANDARD.
+  - **R4**: el Manual no define espesor mínimo de losa → AASHTO STANDARD Art. 8.9 (corrige
+    la referencia previa a LRFD Tabla 2.5.2.6.3-1).
+  - Confirmados además: vías de tránsito (camión 3,00 m; nº vías = ancho/3,50 m; calzada
+    7,30 m → dos vías de media calzada); hormigones Tabla 4.2_17 (P 35 a E 13 MPa); acero
+    Grado 60, fy 420 MPa (Tabla 4.2_18); recubrimientos Art. 8.22 (2,5–7,5 cm); peso
+    específico HA 24 kN/m³; losas de aproximación (espesor mín. 20 cm).
 
 ### Pendiente — próxima acción concreta, en orden de prioridad
-1. **Conseguir el texto completo de los Cap. 4.2.3.2 "Cargas" (pág. 307) y 4.2.3.5
-   "Hormigón Armado" (pág. 360)** del Manual. La fuente ya identificada es:
-   `http://normativa.itafec.com/obras-de-paso-puentes-estructuras/PG.07.01.001.OT.pdf`
-   — la extracción vía `web_fetch` de Claude se corta sistemáticamente en la página 301
-   sin importar el límite de tokens pedido (probablemente un límite del extractor de la
-   herramienta, no de la fuente). **Si tenés acceso a red completo (que un agente como
-   OpenCode normalmente sí tiene), la forma correcta de resolver esto es:**
-   ```bash
-   curl -o /tmp/manual-puentes.pdf http://normativa.itafec.com/obras-de-paso-puentes-estructuras/PG.07.01.001.OT.pdf
-   # luego extraer texto de las paginas 307 y 360 en adelante con una libreria de PDF
-   # en Node (ej. pdf-parse, pdfjs-dist) en vez de un fetcher web con limite de extraccion
-   ```
-   Actualizar `docs/normativa/manual-carreteras-py.md` y reemplazar los `[VERIFICAR]` de
-   `docs/software/algoritmo-nsga2.md` y del YAML con los valores reales una vez obtenidos.
-2. **Implementar `src/engine/src/optimization/nsga2.ts` primero, antes que el modelo
-   estructural.** Cambio de orden respecto a sesiones anteriores: como el algoritmo no
-   depende del caso de puentes, conviene implementarlo y dejarlo pasando los benchmarks
-   de `src/engine/tests/benchmarks/` (ZDT1, SRN) ANTES de acoplarlo al modelo estructural
-   — así cualquier bug que aparezca después se sabe que es del modelo, no del algoritmo.
-3. Recién con (1) y (2) resueltos: implementar
-   `src/engine/src/structural/tipologias/losaMaciza.ts` (hoy son métodos con
-   `throw new Error("TODO")`), citando en cada comentario JSDoc la ecuación y el
+1. ~~**Conseguir el texto completo de los Cap. 4.2.3.2 "Cargas" (pág. 307) y 4.2.3.5
+   "Hormigón Armado" (pág. 360)**~~ — ✅ RESUELTO (2026-08-31), ver sección de
+   confirmados. Quedan pendientes de verificar los valores exactos de **R2/R3** (cuantías)
+   y **R4** (espesor mínimo, fórmula de AASHTO STANDARD Art. 8.9) contra el texto de
+   AASHTO, y completar los `[VERIFICAR]` restantes del YAML si quedara alguno.
+2. ~~**Implementar `src/engine/src/optimization/nsga2.ts` y validar contra ZDT1/SRN**~~ —
+   ✅ RESUELTO (2026-08-31): benchmarks pasando (23 tests), ver sección "Cerrado".
+   Próxima acción concreta:
+3. **Implementar `src/engine/src/structural/tipologias/losaMaciza.ts`** (hoy son métodos
+   con `throw new Error("TODO")`), citando en cada comentario JSDoc la ecuación y el
    artículo exacto de la norma (regla no negociable del Agente Programador, ver
-   `agents/programador/AGENT.md`).
+   `agents/programador/AGENT.md`). El NSGA-II ya está listo para acoplarse vía
+   `ProblemaOptimizacion` (ver cómo lo hacen los benchmarks en
+   `src/engine/src/optimization/problemasBenchmark.ts`).
 4. Implementar `src/engine/src/config/loadYaml.ts` (carga y valida el YAML — incluye la
    regla de que O4/R9 no pueden estar ambos activos) y `src/engine/src/bim/ifcGenerator.ts`
    (con `web-ifc`).
-5. Recién ahí: `src/web/` (inicializar con Vite) y `tools/docx-builder/` (parser
-   Markdown, ensamblador docx, citas) — sus arquitecturas ya están decididas, solo falta
-   implementación.
+5. Recién ahí: `src/web/` (inicializar con Vite — **hoy `npm run build:web` falla porque
+   el workspace no existe**, pendiente deliberado del plan) y `tools/docx-builder/`
+   (parser Markdown, ensamblador docx, citas) — sus arquitecturas ya están decididas,
+   solo falta implementación.
 
 ## Reglas que no se negocian (repetidas acá porque son las que más se rompen)
 

@@ -9,18 +9,63 @@
  * sin depender de ningun caso de puentes propio -- es la forma de demostrar que el
  * ALGORITMO es correcto, independientemente del problema de ingenieria civil.
  *
- * TODO (Agente Programador): implementar ZDT1 como funcion objetivo de prueba, correr
- * nsga2.ts sobre ella, y verificar (a) que el frente obtenido esta cerca del frente
- * analitico conocido (metrica de distancia, ej. generational distance) y (b) que tiene
- * buena cobertura/diversidad (metrica de spread). Definir umbrales de aceptacion
- * concretos ACA antes de implementar (mismo principio que plan-de-validacion.md: criterio
- * definido antes de ver resultados).
+ * Criterios de aceptacion (definidos ANTES de correr, ver docs/software/plan-de-validacion.md):
+ *   - Distancia generacional (GD) al frente analitico < 0.02
+ *   - Indice de spread Delta (Deb et al., 2002, ec. 9) < 0.5 (buena distribucion)
+ *   - Cobertura: el frente obtenido abarca casi todo [0,1] en f1 (min < 0.1, max > 0.9)
+ *
+ * La semilla fija hace el test determinista (reproducible entre corridas y entornos).
  */
 
 import { describe, it, expect } from "vitest";
+import { optimizarNSGA2 } from "../../src/optimization/nsga2";
+import {
+  distanciaGeneracional,
+  indiceSpread,
+} from "../../src/optimization/metricasFrente";
+import {
+  crearProblemaZDT1,
+  frenteAnaliticoZDT1,
+} from "../../src/optimization/problemasBenchmark";
 
-describe.skip("NSGA-II vs ZDT1 (benchmark estandar de la literatura)", () => {
-  it("TODO: converge al frente de Pareto conocido de ZDT1 dentro de la tolerancia definida", () => {
-    expect(true).toBe(false); // placeholder intencional -- reemplazar al implementar
+const PROBLEMA = crearProblemaZDT1(30);
+const FRENTE_ANALITICO = frenteAnaliticoZDT1(500);
+const EXTREMOS = [
+  [0, 1],
+  [1, 0],
+];
+
+describe("NSGA-II vs ZDT1 (benchmark estandar de la literatura)", () => {
+  it("converge al frente de Pareto analitico dentro de la tolerancia definida", () => {
+    const resultado = optimizarNSGA2(PROBLEMA, {
+      poblacion: 100,
+      generaciones: 500,
+      probabilidadCruce: 0.9,
+      probabilidadMutacion: 1 / 30,
+      semilla: 42,
+    });
+
+    const frente = resultado.frentePareto.map((s) => s.objetivos);
+    expect(frente.length).toBeGreaterThan(0);
+
+    const gd = distanciaGeneracional(frente, FRENTE_ANALITICO);
+    expect(gd).toBeLessThan(0.02);
+
+    const delta = indiceSpread(frente, EXTREMOS);
+    expect(delta).toBeLessThan(0.5);
+  });
+
+  it("cubre casi todo el rango del frente analitico (diversidad)", () => {
+    const resultado = optimizarNSGA2(PROBLEMA, {
+      poblacion: 100,
+      generaciones: 500,
+      probabilidadCruce: 0.9,
+      probabilidadMutacion: 1 / 30,
+      semilla: 42,
+    });
+
+    const f1s = resultado.frentePareto.map((s) => s.objetivos[0]);
+    expect(Math.min(...f1s)).toBeLessThan(0.1);
+    expect(Math.max(...f1s)).toBeGreaterThan(0.9);
   });
 });

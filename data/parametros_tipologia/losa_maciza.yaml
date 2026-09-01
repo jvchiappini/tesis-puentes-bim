@@ -107,12 +107,12 @@ parametros_sitio:
 
   P3_camion_diseno:
     activo: true
-    valor: "VERIFICAR" # AASHTO HL-93 vs. camión específico del Manual PY -- pendiente Investigador
+    valor: "aashto_standard_hs20_carga_faja" # CONFIRMADO (Manual PY 4.2.3.2 Cargas, pags. 307-316): el Manual NO define camion propio; usa cargas vivas AASHTO. 1er caso camion tipo H/HS (HS-20), 2do caso carga de faja -- se usa el que genere el efecto mas desfavorable. NO es HL-93 (eso es de AASHTO LRFD).
 
   P4_incremento_carga_dinamica:
     activo: true
     unidad: "%"
-    valor: "VERIFICAR"  # AASHTO STANDARD 2002 usa formula I = 50/(L+125), L en pies -- verificar valor exacto en sec. 4.2.3.2 Cargas
+    valor: "I = 50/(L+125)" # CONFIRMADO (Manual PY 4.2.3.2 remite al Art. 3.8 de AASHTO STANDARD, no define formula propia): I = 50/(L+125), L en pies, maximo 30% (AASHTO STANDARD 2002, Art. 3.8.2.2).
 
   P5_peso_especifico_hormigon:
     activo: true

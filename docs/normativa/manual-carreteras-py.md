@@ -74,18 +74,60 @@ Esto reemplaza el placeholder `[VERIFICAR]` de P2 (`ancho_calzada`) en el YAML �
 Nuestra tipología (losa maciza) encaja naturalmente en **Puentes Pequeños/Medianos**,
 coherente con el alcance explícito de la Guía (luces libres ≤ 40 m).
 
-## Pendiente (Investigador — próxima búsqueda)
+## Sección 4.2.3.2 "Cargas" (pág. 307) — texto completo obtenido ✅
 
-🟡 **Sección 4.2.3.2 "Cargas" (pág. 307) y 4.2.3.5 "Hormigón Armado" (pág. 360)** son las
-más críticas para el modelo (camión de diseño exacto, factor de impacto, cuantías,
-espesores mínimos, recubrimientos) y todavía no se consiguió su texto completo — la
-extracción automática del PDF se corta sistemáticamente alrededor de la página 301 pese a
-reintentos. Próximos pasos posibles: (a) descargar el PDF directamente y extraerlo con
-`pdf-reading` localmente en vez de `web_fetch`, (b) contactar a la Asociación Paraguaya de
-Carreteras (apcarreteras.org.py) o al MOPC directamente, (c) buscar el PDF fuente en
-`apcarreteras.org.py/wp-content/uploads/` con nombre de archivo específico del volumen 4.2.
+Obtenido el texto completo de las págs. 307–316 vía descarga directa del PDF + extracción
+local (ver método al final). Resumen de lo que afecta al modelo:
 
-Hasta conseguir esas dos secciones, `algoritmo-nsga2.md` sigue usando AASHTO como respaldo
-provisorio en los puntos marcados `[VERIFICAR]`, ahora corregido a **AASHTO STANDARD
-2002** (no LRFD) como la referencia de respaldo correcta, dado que es la que el Manual usa
-como base principal.
+- **Filosofía de cargas:** la Guía está basada en **AASHTO Standard** (permite ASD y LFD);
+  AASHTO LRFD se presenta solo como alcance comparativo. Se remite a la Sección 3 de AASHTO
+  para tipos, combinaciones y distribución de cargas.
+- **Carga viva de diseño:** *"las cargas vivas de diseño son las establecidas por las
+  Normativas AASHTO"* — **el Manual NO define un camión propio**. Esquema de cargas:
+  1er caso **camión tipo H / HS** (HS-20, HS-15) y 2do caso **carga de faja**; se usa el
+  que produzca el efecto más desfavorable.
+  → **P3 resuelto: NO es HL-93** (HL-93 es de AASHTO LRFD); es camión AASHTO STANDARD tipo
+  HS-20 (+ carga de faja).
+- **Vías de tránsito:** ancho de vía que ocupa un camión = **3,00 m**; número de vías =
+  ancho del puente / **3,50 m** (sin fracciones). Para calzada de **7,30 m**: dos vías de
+  diseño, cada una con ancho = mitad de la calzada.
+- **Impacto:** remite al **Artículo 3.8 de la AASHTO**. No define fórmula propia → rige la
+  de AASHTO STANDARD 2002: **I = 50/(L+125) (%)**, L en pies, máx. 30% → **P4 resuelto**.
+- **Reducción de intensidad (múltiples vías):** 1–2 vías 100%; 3 vías 90%; 4+ vías 75%.
+- **Pasarelas/ciclovías:** carga distribuida 4.067 N/m² (415 kgf/m²).
+- **Combinaciones de carga AASHTO Standard (LFD):** Tabla 4.2_8 (Parte B, Sección 3).
+- **Pesos específicos (Tabla 4.2_7):** hormigón simple 22.000 N/m³; **hormigón armado y
+  pretensado 24.000 N/m³ (= 24 kN/m³)**; capa asfáltica 24.000 N/m³; acero 78.500 N/m³.
+
+## Sección 4.2.3.5 "Hormigón Armado" (pág. 360) — texto completo obtenido ✅
+
+Págs. 360–361 vía el mismo método. Resumen de lo que afecta al modelo:
+
+- **Rige la Sección 8 de AASHTO STANDARD** para todo el diseño de hormigón armado, con las
+  modificaciones/complementos del Manual → resuelve R1.
+- **Hormigón (Tabla 4.2_17)** — clasificación por resistencia característica a compresión
+  en probeta cilíndrica a 28 días: P = 35 MPa (350 kgf/cm²), A = 28 (280), B = 21 (210),
+  C = 18 (180), D = 15 (150), E = 13 (130).
+- **Acero (Tabla 4.2_18)** — Grado 60, fy = **420 MPa (4.200 kgf/cm²)**, según el punto
+  8.15.2.2 de AASHTO Standard.
+- **Control de deformaciones:** miembros a flexión con rigidez suficiente para limitar
+  deflexiones "para las cargas en servicio más impacto" (Artículos 8.9 y 8.13 AASHTO).
+- **Recubrimientos mínimos (Art. 8.22 AASHTO):**
+  - Vaciado contra terreno / permanentemente enterrado: **7,5 cm**
+  - Pilotes in situ: **7,5 cm**
+  - Expuesto a la intemperie o en contacto con la tierra — refuerzo principal: **5,0 cm**;
+    estribos/zunchos: **4,0 cm**
+  - Losa en climas moderados: refuerzo superior e inferior **2,5 cm**
+  - Losa en ambientes agresivos: refuerzo superior **4,0 cm**, inferior **5,0 cm**
+- **Diafragmas/travesaños:** según Art. 8.12 AASHTO (vigas T y cajón).
+- **Losas de aproximación:** espesor mínimo **20 cm**; armadura mínima Ø12 c/20; juntas a
+  no más de 6 m; vanos ≤ 25 m²; diseño como losa sobre lecho elástico.
+- **Nota:** el Manual NO especifica por sí mismo el espesor mínimo de losa por luz → R4
+  queda regido por AASHTO STANDARD Sección 8 (Art. 8.9), no por LRFD.
+
+> **Método usado para resolver el bloqueo de extracción:** el PDF se descargó directo con
+> `curl` (20 MB, 832 páginas) y se extrajo con pdf.js local. La capa de texto del cuerpo usa
+> una fuente sin mapeo Unicode (los párrafos salen como caracteres privados ilegibles), por
+> lo que las páginas 49–58 y 102–106 del PDF (= págs. 307–316 y 360–364 del documento) se
+> renderizaron con `pdftoppm` y se les aplicó OCR local (Windows OCR, idioma es-MX). El
+> resultado completo (legible) quedó en el flujo de esta sesión.
