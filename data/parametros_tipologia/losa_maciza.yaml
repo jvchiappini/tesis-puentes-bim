@@ -1,0 +1,240 @@
+# Configuración toggleable — Tipología: Losa Maciza de Hormigón Armado
+#
+# Cada variable/parámetro/objetivo/restricción tiene "activo: true/false".
+# - Si una VARIABLE tiene activo=false, se usa "valor_fijo" y el algoritmo no la mueve.
+# - Si un OBJETIVO/RESTRICCIÓN tiene activo=false, el motor lo excluye del problema.
+#
+# Ver la explicación completa de cada ítem en docs/software/algoritmo-nsga2.md — este
+# archivo es el que realmente lee el motor (src/engine/src/optimization/nsga2.ts);
+# el .md es la documentación legible para humanos.
+#
+# Perfiles predefinidos abajo del todo: "basico", "avanzado", "completo".
+
+# -----------------------------------------------------------------------------
+# Filosofía normativa (a nivel de archivo, no solo en P3)
+#
+# El Manual de Carreteras del Paraguay usa AASHTO STANDARD (17th ed., 2002) como base
+# PRINCIPAL de diseño, y solo en algunos casos AASHTO LRFD (4th ed., 2007) como
+# complemento. El Manual PROHÍBE EXPLÍCITAMENTE mezclar ambas normativas en un mismo
+# cálculo (hipótesis y filosofías de cálculo distintas -> riesgo de sobre/subdimensionar).
+#
+# El motor (src/engine/src/optimization/nsga2.ts) DEBE leer este campo y usar
+# EXCLUSIVAMENTE las ecuaciones/tablas de la filosofía indicada en todo el cálculo
+# estructural de la corrida. Ver docs/normativa/manual-carreteras-py.md.
+# -----------------------------------------------------------------------------
+filosofia_normativa: "aashto_standard_2002"  # opciones: aashto_standard_2002 | aashto_lrfd_2007
+
+variables:
+  V1_espesor_losa:
+    activo: true
+    tipo: continua
+    unidad: m
+    rango: [0.20, 1.20]
+    valor_fijo: null
+
+  V2_diametro_armadura_principal:
+    activo: true
+    tipo: discreta
+    unidad: mm
+    catalogo: [10, 12, 16, 20, 25, 32]
+    valor_fijo: null
+
+  V3_separacion_armadura_principal:
+    activo: true
+    tipo: continua
+    unidad: m
+    rango: [0.10, 0.30]
+    valor_fijo: null
+
+  V4_diametro_armadura_reparticion:
+    activo: true
+    tipo: discreta
+    unidad: mm
+    catalogo: [10, 12, 16, 20, 25, 32]
+    valor_fijo: null
+
+  V5_separacion_armadura_reparticion:
+    activo: true
+    tipo: continua
+    unidad: m
+    rango: [0.15, 0.40]
+    valor_fijo: null
+
+  V6_resistencia_hormigon:
+    activo: false
+    tipo: discreta
+    unidad: MPa
+    catalogo: [21, 25, 28, 30, 35]
+    valor_fijo: 25
+
+  V7_grado_acero:
+    activo: false
+    tipo: discreta_categorica
+    unidad: MPa
+    catalogo: [420, 500]
+    valor_fijo: 420
+
+  V8_numero_capas_armadura:
+    activo: false
+    tipo: discreta_categorica
+    catalogo: [1, 2]
+    valor_fijo: 1
+
+  V9_recubrimiento:
+    activo: false
+    tipo: continua
+    unidad: m
+    rango: [0.025, 0.075]
+    valor_fijo: null # se deriva de P7 (clase de exposición) cuando activo=false
+
+  V10_espesor_voladizo:
+    activo: false
+    tipo: continua
+    unidad: m
+    rango: [0.15, 0.40]
+    valor_fijo: null # tipología v1 no modela voladizo
+
+parametros_sitio:
+  P1_luz_diseno:
+    activo: true
+    unidad: m
+    # valor ingresado por el usuario en cada corrida, sin default
+
+  P2_ancho_calzada:
+    activo: true
+    unidad: m
+    valor_referencia_manual_py: 7.30  # confirmado: minimo para transito bidireccional/2 fajas (Tabla 4.2_6). Simple via: 4.00 m minimo.
+
+  P3_camion_diseno:
+    activo: true
+    valor: "VERIFICAR" # AASHTO HL-93 vs. camión específico del Manual PY -- pendiente Investigador
+
+  P4_incremento_carga_dinamica:
+    activo: true
+    unidad: "%"
+    valor: "VERIFICAR"  # AASHTO STANDARD 2002 usa formula I = 50/(L+125), L en pies -- verificar valor exacto en sec. 4.2.3.2 Cargas
+
+  P5_peso_especifico_hormigon:
+    activo: true
+    unidad: kN/m3
+    valor: 24
+
+  P6_cargas_barandas_veredas:
+    activo: false
+    unidad: kN/m
+    valor: 0
+
+  P7_clase_exposicion:
+    activo: true
+    valor: "normal" # opciones: normal | agresiva -- define V9 cuando V9.activo=false
+
+  P8_angulo_esviaje:
+    activo: false
+    unidad: grados
+    valor: 0
+
+  P9_zona_sismica:
+    activo: false
+    valor: null
+
+  P10_tipo_suelo:
+    activo: false
+    valor: null
+
+  P11_costo_unitario_hormigon:
+    activo: true
+    unidad: "USD/m3"
+    valor: null # completar con precio de mercado local al momento de correr
+
+  P12_costo_unitario_acero:
+    activo: true
+    unidad: "USD/kg"
+    valor: null
+
+  P13_costo_unitario_encofrado:
+    activo: false
+    unidad: "USD/m2"
+    valor: null
+
+  P14_factor_importancia:
+    activo: false
+    valor: 1.0
+
+objetivos:
+  O1_costo_total:
+    activo: true
+    sentido: minimizar
+
+  O2_peso_propio:
+    activo: true
+    sentido: minimizar
+
+  O3_huella_carbono:
+    activo: false
+    sentido: minimizar
+
+  O4_deflexion_servicio:
+    activo: false # si se activa, R9 (misma cantidad como restricción) debe desactivarse
+    sentido: minimizar
+
+  O5_complejidad_constructiva:
+    activo: false
+    sentido: minimizar
+
+restricciones:
+  R1_flexion_ELU:
+    activo: true
+
+  R2_cuantia_minima:
+    activo: true
+
+  R3_cuantia_maxima_ductilidad:
+    activo: true
+
+  R4_espesor_minimo_por_luz:
+    activo: true
+
+  R5_recubrimiento_minimo:
+    activo: true
+
+  R6_separacion_barras:
+    activo: true
+
+  R7_armadura_reparticion_minima:
+    activo: true
+
+  R8_control_fisuracion:
+    activo: false
+
+  R9_deflexion_servicio:
+    activo: true # ver nota: mutuamente excluyente con O4_deflexion_servicio.activo
+
+  R10_corte_ELU:
+    activo: false
+
+  R11_longitud_desarrollo:
+    activo: false
+
+# ---------------------------------------------------------------------------
+# Perfiles predefinidos: forma rápida de cambiar de "básico" a "completo" sin
+# editar cada flag a mano. El motor, al recibir --perfil=basico, sobreescribe
+# los "activo" de arriba según lo definido acá.
+# ---------------------------------------------------------------------------
+perfiles:
+  basico:
+    descripcion: "Perfil recomendado para la primera corrida (Fase 3 del ROADMAP)."
+    variables_activas: [V1_espesor_losa, V2_diametro_armadura_principal, V3_separacion_armadura_principal, V4_diametro_armadura_reparticion, V5_separacion_armadura_reparticion]
+    objetivos_activos: [O1_costo_total, O2_peso_propio]
+    restricciones_activas: [R1_flexion_ELU, R2_cuantia_minima, R3_cuantia_maxima_ductilidad, R4_espesor_minimo_por_luz, R5_recubrimiento_minimo, R6_separacion_barras, R7_armadura_reparticion_minima, R9_deflexion_servicio]
+
+  avanzado:
+    descripcion: "Suma resistencia del hormigón como variable y huella de carbono como objetivo."
+    variables_activas: [V1_espesor_losa, V2_diametro_armadura_principal, V3_separacion_armadura_principal, V4_diametro_armadura_reparticion, V5_separacion_armadura_reparticion, V6_resistencia_hormigon]
+    objetivos_activos: [O1_costo_total, O2_peso_propio, O3_huella_carbono]
+    restricciones_activas: [R1_flexion_ELU, R2_cuantia_minima, R3_cuantia_maxima_ductilidad, R4_espesor_minimo_por_luz, R5_recubrimiento_minimo, R6_separacion_barras, R7_armadura_reparticion_minima, R8_control_fisuracion, R9_deflexion_servicio]
+
+  completo:
+    descripcion: "Todo activo -- usar solo si el cronograma de la Fase 5 lo permite."
+    variables_activas: [V1_espesor_losa, V2_diametro_armadura_principal, V3_separacion_armadura_principal, V4_diametro_armadura_reparticion, V5_separacion_armadura_reparticion, V6_resistencia_hormigon, V7_grado_acero, V8_numero_capas_armadura, V9_recubrimiento]
+    objetivos_activos: [O1_costo_total, O2_peso_propio, O3_huella_carbono, O5_complejidad_constructiva] # O4 excluido: redundante con R9
+    restricciones_activas: [R1_flexion_ELU, R2_cuantia_minima, R3_cuantia_maxima_ductilidad, R4_espesor_minimo_por_luz, R5_recubrimiento_minimo, R6_separacion_barras, R7_armadura_reparticion_minima, R8_control_fisuracion, R9_deflexion_servicio, R10_corte_ELU, R11_longitud_desarrollo]

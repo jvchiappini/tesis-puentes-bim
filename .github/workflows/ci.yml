@@ -1,0 +1,22 @@
+name: CI
+
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+    branches: [main, dev]
+  workflow_call: {} # permite que deploy-pages.yml lo invoque como paso previo obligatorio
+
+jobs:
+  test-engine:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Install dependencies (workspaces)
+        run: npm install
+      - name: Run engine tests (incluye benchmarks NSGA-II)
+        run: npm run test:engine

@@ -1,0 +1,16 @@
+{
+  "name": "tesis-puentes-bim",
+  "version": "0.1.0",
+  "description": "Optimizacion NSGA-II + BIM (ISO 19650) para puentes viales de hormigon armado. Monorepo npm workspaces.",
+  "private": true,
+  "workspaces": [
+    "src/engine",
+    "src/web",
+    "tools/docx-builder"
+  ],
+  "scripts": {
+    "test:engine": "npm run test --workspace=src/engine",
+    "build:web": "npm run build --workspace=src/web",
+    "build:docx": "npm run build --workspace=tools/docx-builder"
+  }
+}

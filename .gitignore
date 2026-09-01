@@ -1,0 +1,16 @@
+# Node / Web
+node_modules/
+dist/
+build/
+
+# Resultados pesados (versionar solo resumenes, no corridas completas)
+data/resultados/*
+!data/resultados/.gitkeep
+
+# docx-builder
+docs/tesis/output/
+
+# Sistema
+.DS_Store
+*.log
+.env

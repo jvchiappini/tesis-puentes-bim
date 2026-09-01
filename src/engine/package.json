@@ -1,0 +1,20 @@
+{
+  "name": "@tesis-puentes-bim/engine",
+  "version": "0.1.0",
+  "description": "Motor unico (TypeScript) de calculo estructural, NSGA-II y generacion BIM. Corre 100% en el navegador -- sin backend. Ver docs/software/arquitectura.md.",
+  "type": "module",
+  "main": "src/index.ts",
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:benchmarks": "vitest run tests/benchmarks"
+  },
+  "dependencies": {
+    "js-yaml": "4.1.0",
+    "web-ifc": "0.0.68"
+  },
+  "devDependencies": {
+    "vitest": "1.6.0",
+    "typescript": "5.5.2"
+  }
+}
